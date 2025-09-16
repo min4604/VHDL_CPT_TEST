@@ -24,13 +24,13 @@
 
 ## 子資料夾
 
-- [FA](./FA/README.md)  
+- [FA](./FA)  
   全加法器（Full Adder）設計與測試。
 
-- [SRFF](./SRFF/README.md)  
+- [SRFF](./SRFF)  
   SR 觸發器（Set-Reset Flip-Flop）電路設計。
 
-- [bin to bcd](./bin%20to%20bcd/README.md)  
+- [bin to bcd](./bin%20to%20bcd)  
   二進位轉 BCD（Binary Coded Decimal）轉換器設計。
 
 ---
