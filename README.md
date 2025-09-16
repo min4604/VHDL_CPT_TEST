@@ -7,13 +7,13 @@
 
 ## 目錄索引
 
-- [base](./base/README.md)  
+- [base](./base)  
   基礎數位邏輯元件的 VHDL 範例（如 AND/OR/NOT/MUX/DMUX/移位暫存器等），適合邏輯電路基礎學習。
 
-- [Sensor And Module](./Sensor%20And%20Module/README.md)  
+- [Sensor And Module](./Sensor%20And%20Module)  
   各式感測器及模組（如 DHT11 溫濕度、SD178B 聲音播放、LED8X8 點矩陣、UART 等）之 VHDL 驅動與應用範例。
 
-- [Simple_project](./Simple_project/README.md)  
+- [Simple_project](./Simple_project)  
   各種簡易 VHDL 專案範例，方便初學者快速實作和練習。
 
 - [seg7](./seg7)  
