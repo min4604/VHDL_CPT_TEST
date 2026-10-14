@@ -1,38 +1,28 @@
-# base
+# base — 基礎數位邏輯
 
-本資料夾包含基礎數位邏輯元件的 VHDL 範例與設計，適合初學者數位電路練習與進階設計參考。
+本資料夾收錄基礎數位邏輯元件的 VHDL 範例，適合初學者練習組合邏輯、循序邏輯與元件例化 (component / port map)。
 
 ## 檔案說明
 
-- `and_not_or.vhd`  
-  AND/NOT/OR 基本邏輯閘組合範例。
-
-- `DMUX.vhd`  
-  解多工器（Demultiplexer）設計。
-
-- `divider_n.vhd`  
-  N分頻器設計範例。
-
-- `havecontrol_and_or .vhd`  
-  具控制訊號之 AND/OR 電路設計。
-
-- `MUX.vhd`  
-  多工器（Multiplexer）設計範例。
-
-- `shift_register.vhd`  
-  移位暫存器設計範例。
+| 檔案 | 類型 | 功能 |
+|------|------|------|
+| `and_not_or.vhd` | 組合邏輯 | `D = (A AND B) OR (NOT C)`，示範 `buffer` 埠 |
+| `havecontrol_and_or.vhd` | 組合邏輯 | 具低態致能 `C` 的 AND / OR 閘 (使用 `BIT` 型態) |
+| `MUX.vhd` | 組合邏輯 | 8 對 1 多工器 (`with ... select`) |
+| `DMUX.vhd` | 組合邏輯 | 1 對 8 解多工器 (聚合 `others=>'0'` 寫法) |
+| `divider_n.vhd` | 循序邏輯 | 通用除 N 除頻器，以 `generic N` 設定倍數 |
+| `shift_register.vhd` | 循序邏輯 | 10 位元可載入 / 左移 / 右移暫存器，LED 顯示 |
 
 ## 子資料夾
 
-- [FA](./FA)  
-  全加法器（Full Adder）設計與測試。
+| 資料夾 | 內容 |
+|--------|------|
+| [FA](./FA) | 半加器、全加器，3 / 4 位元加法器 (結構描述 vs 行為描述) |
+| [SRFF](./SRFF) | NAND 構成的 SR 閂鎖器及「馬達開關 + 計數器」應用 |
+| [bin to bcd](./bin%20to%20bcd) | 二進位轉 BCD：移位加三法、連續減法法、七段顯示 |
 
-- [SRFF](./SRFF)  
-  SR 觸發器（Set-Reset Flip-Flop）電路設計。
+## 備註
 
-- [bin to bcd](./bin%20to%20bcd)  
-  二進位轉 BCD（Binary Coded Decimal）轉換器設計。
-
----
-
-> 若子資料夾內有 README.md，可點擊名稱直接瀏覽說明文件。
+- `MUX.vhd`、`DMUX.vhd`、`shift_register.vhd` 的 `case` / `with select` 沒有 `when others`。
+  Quartus 可以編譯，但 GHDL 等嚴格的工具會回報 *missing choice*，必要時可自行補上。
+- 檔名原本含有空白 (`havecontrol_and_or .vhd`)，已更正為 `havecontrol_and_or.vhd`。

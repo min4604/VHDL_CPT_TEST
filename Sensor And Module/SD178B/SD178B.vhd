@@ -1,3 +1,18 @@
+-------------------------------------------------------------------
+-- 檔案名稱：SD178B.vhd
+-- 功    能：SD178BM 語音播放模組 (I2C) 控制範例 —— 播放 microSD 卡內的 wav 檔
+-- 說    明：
+--   1. FD 為除頻計數器 (clk50M)，I2C 時脈 SD178BMI2C_CLK = FD(8)。
+--   2. SD178BMI2C_sound 為「語音命令表」，第 0 筆為長度，之後依序為要送出的命令碼，
+--      SD178BMI2C_P 會自動依序透過 sd178BMI2C2wdriver 寫入，並處理各指令所需的等待時間。
+--   3. 依 SD178BMI2Ci_MO0 (模組播放狀態腳) 選擇命令表：
+--        soundn=0：設定 MO 腳位 (8A 07) 後結束
+--        soundn=1：設定音量 (86)、聲道 (8B)、播放檔案 mp3 (88，例 1001.wav)
+--        soundn=2：播放內建文字語音 (Big5 碼)，目前 soundn 只會是 0 或 1，此段未使用
+--   4. 每次 MO0 上升緣 (一段播放結束) mp3 編號加 1，依序播放 1001、1002 ... .wav。
+-- 相依元件：sd178BMI2C2wdriver.vhd
+-- 以下為 SD178BM 指令表：
+-------------------------------------------------------------------
 --SD178BMI2C 語音播放模組
 --SD178B address = 0b0100 000 (7 bits)
 --SD178BMI2C指令表
@@ -144,6 +159,7 @@ architecture a of SD178B is
 											 
 											 
 											 
+		-- 除頻器
 		Freq_Div:process(clk50M)
 		begin
 			if  S_RESET ='0' then
@@ -155,6 +171,7 @@ architecture a of SD178B is
 	
 	
 	
+	-- 每段播放結束 (MO0 上升緣) 切換到下一個 wav 檔編號
 	process(SD178BMI2Ci_MO0 )
 	begin
 		if reset_in ='0' then
@@ -164,6 +181,7 @@ architecture a of SD178B is
 		end if;
 		
 	end process;
+	-- 命令表一輪送完 (SD178BMI2CP_ok=1) 後，依狀態載入下一組命令並重新啟動
 	process(SD178BMI2CP_ok,reset_in)
 	begin
 		

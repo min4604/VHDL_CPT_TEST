@@ -2,6 +2,11 @@
 --檔案名稱：uart_receiver.vhd
 --功    能：串列傳輸接收器；1 start bit, 8 data bits, 1 stop bit
 --日    期：2003.8.8
+--說    明：以 8 倍鮑率 (bclkx8) 取樣：
+--          idle           : 等待 rxd 出現 0 (起始位元)
+--          start_detected : 再取樣 4 次確認仍為 0 (位於起始位元中央)
+--          recv_data      : 之後每 8 個 bclkx8 取樣一次 (位元中央)，
+--                           收滿 8 bit 後檢查停止位元，正確則載入 RDR 並送出 rxd_readyH
 -------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;

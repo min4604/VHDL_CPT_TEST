@@ -1,3 +1,22 @@
+-------------------------------------------------------------------
+-- 檔案名稱：TFT_TEST.vhd
+-- 功    能：ST7735 1.8 吋 128x160 TFT LCD (SPI) 驅動測試 —— 全螢幕輪流填色
+-- 說    明：
+--   1. 除頻 process：由 50MHz 產生 delay_40ns_CLK (25MHz)、
+--      delay_us_CLK、delay_ms_CLK。
+--   2. 主程式 process (25MHz) 依序執行三個階段：
+--        (1) 硬體重置：RES 拉低 5ms
+--        (2) 初始化  ：TFT_Init 依 BYTE_CLK 送出 ST7735 初始化命令與參數
+--                      (軟體重置、離開睡眠、Frame rate、電源、Gamma、16-bit 色彩…)
+--        (3) 主畫面  ：FillRectangle 設定視窗並送出 RGB565 顏色資料，
+--                      每秒依 main_Cnt 切換一種顏色 (紅/綠/青/洋紅/黃/白/黑…)
+--   3. SPI 寫入由 Write_Cmd (DC='0')、Write_Data (DC='1')、Write_Data16 完成，
+--      BITS_CLK 每 2 個值產生一個 SCLK 週期 (偶數 SCLK=0 放資料、奇數 SCLK=1 取樣)，
+--      MSB 先送；Count_Data 負責推進 BITS_CLK / BYTE_CLK 計數。
+--   顏色格式：RGB565 (R 5bit、G 6bit、B 5bit)
+-- 注    意：procedure 直接驅動架構內的 signal，Quartus 可接受，
+--           但 GHDL 等嚴格遵循 VHDL-93 的工具會報錯。
+-------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -13,7 +32,7 @@ port(
      CS   : out std_logic;--CS  PIN
      DC   : out std_logic;--DC  PIN
      RES  : out std_logic;--RES PIN
-      LED  : out std_logic;--BL PIN �����]�i�H 
+      LED  : out std_logic;--BL PIN 背光 (不接也可以)
      reset,clk_50M :in  std_logic
 );
 end TFT_TEST;
@@ -547,7 +566,7 @@ architecture inside of TFT_TEST is
         end if;
     end FillRectangle;  ------------------------------------------------------------------------------End
 begin
-	process(reset,clk_50M)  ----------------------���W��                 
+	process(reset,clk_50M)  ----------------------除頻器
 	Variable div_us_cnt : Integer range 0 to 100:= 0;
 	Variable div_ms_cnt : Integer range 0 to 50000:= 0;
 	begin
@@ -570,7 +589,7 @@ begin
 	end process; -------------------------------------------------------------------------------------End
      
 
-   process(reset,delay_40ns_CLK)-----------------------�D�{��--
+   process(reset,delay_40ns_CLK)-----------------------主程式--
 		Variable BITS_CLK : integer range 0 to 64 :=0;
 		Variable BYTE_CLK : integer range 0 to 25000:=0;
 		Variable delay_40ns_Cnt : integer range 0 to 50000:= 0; 
@@ -594,7 +613,7 @@ begin
 			CS_Buf <= '1';
 			RES_Buf <= '0';
 			LED_Buf <= '1';
-		elsif (reset='1' and (delay_40ns_CLK'event and delay_40ns_CLK = '0')) then --25M�u�@�W�v
+		elsif (reset='1' and (delay_40ns_CLK'event and delay_40ns_CLK = '0')) then --25M工作頻率
 			if(LCD_RES_f=True and Init_f=False and main_f=False) then ----------------Hardware Reset for LCD => Takes 5ms
 				if(delay_40ns_Cnt>=25000) then --delay for 5ms (25000*40ns)
 					delay_40ns_Cnt := 0;

@@ -1,3 +1,24 @@
+-------------------------------------------------------------------
+-- 檔案名稱：TSL2561.vhd
+-- 功    能：TSL2561 數位光照度感測器 (I2C) 讀取與 Lux 計算
+-- 說    明：
+--   1. FD 為除頻計數器 (clk50M)：I2C 時脈 TSL2561_CLK = FD(8)，
+--      控制流程時脈 FD(9)，量測週期由 FD(17) 驅動的 int_counter 產生。
+--   2. 讀取流程 (TSL2561_P 狀態機，TSL2561P_case)：
+--        0：清除中斷並關閉電源 → 延遲後寫入 0x03 開啟電源
+--        1：設定中斷控制暫存器 (0x06) = 0x10 (level interrupt)
+--        2：等積分時間到 (TSL2561_INT='0') 後連續讀取 4 byte：
+--           DATA0LOW、DATA0HIGH (CH0：可見光+紅外)、DATA1LOW、DATA1HIGH (CH1：紅外)
+--        3：清除中斷並關閉電源
+--        4：完成
+--   3. Lux 計算：依 TSL2561 datasheet 的整數演算法，
+--      以 chScale 縮放 CH0/CH1 → 計算 ratio=CH1/CH0 → 查表 (K/B/M) →
+--      lux = (CH0*B - CH1*M) / 2^14，結果輸出到 dtout (單位 lux)。
+--      預設 iGain=0 (1x)、Tint=2 (402ms)、iType=0 (T/FN/CL 封裝)。
+--   4. int_out 輸出模擬的中斷/量測週期信號 (觀察用)。
+-- 相依元件：i2c2wdriver2.vhd
+-- 注    意：GHDL 會因 std_logic_unsigned/arith 的運算子多載而報錯，Quartus 可正常編譯。
+-------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -124,6 +145,7 @@ begin
 	end if;
 end process Freq_Div;
 	
+	-- 量測週期計數器：int_counter 0~200 循環
 	process(FD(17))
 	begin
 		if TSL2561P_reset ='0' then
@@ -133,6 +155,7 @@ end process Freq_Div;
 		end if;
 	end process;
 	
+	-- 產生模擬中斷 (積分時間) 與每週期重新啟動讀取流程
 	process(int_counter)
 	begin
 		if int_counter<100 then

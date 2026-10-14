@@ -2,6 +2,11 @@
 --檔案名稱：uart_transmitter.vhd
 --功    能：串列傳輸；1 start bit, 8 data bits, 1 stop bit
 --日    期：2003.8.8  
+--說    明：狀態機
+--          idle  : 等待 txd_startH，將 DBUS 載入移位暫存器 TSR (最低位補 1 = 閒置)
+--          synch : 等待 bclk 上升緣，將 TSR(0) 設為 0 送出起始位元
+--          tdata : 每個 bclk 右移 1 位 (LSB 先送，左邊補 1 作為停止位元)，
+--                  送完 9 次後輸出 txd_doneH 並回到 idle
 -------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;

@@ -8,6 +8,17 @@
 --七段顯示器採用共陰-共陽互補掃瞄顯示
 --105.11.03
 --creator by YHGL
+--
+--功    能：DHT11 溫濕度感測器單線 (1-wire) 通訊驅動
+--通訊流程 (ss 狀態機)：
+--  "00" 送出起始信號：先釋放匯流排(Z)等待，再拉低約 21ms (tryDelay=14) 要求 DHT11 回應
+--  "01" 等待 DHT11 拉低：每個位元以低態開始；並在高態期間第 38 個時脈(約 49us)時
+--       若仍為高則判定該位元為 '1' (DHT11：高態 26~28us 為 0、70us 為 1)
+--  "10" 等待 DHT11 拉高：收滿 40 bit 後比對檢查碼 (前 4 byte 相加 = 第 5 byte)
+--  "11" 錯誤處理：依 DHT11_tryN 重試，次數用完則 DHT11_S='1' 表示失敗
+--使用方式：DHT11_RESET 由 '0' → '1' 開始讀取，DHT11_ok='1' 表示完成
+--          (DHT11_S='0' 成功、'1' 失敗)，結果由 DHT11_DBoH / DHT11_DBoT 等輸出
+--注    意：GHDL 會因 std_logic_unsigned 的 "=" 多載而報錯，Quartus 可正常編譯
 Library IEEE;
 	Use IEEE.std_logic_1164.all;
 	Use IEEE.std_logic_unsigned.all;
