@@ -1,6 +1,9 @@
 -------------------------------------------------------------------
 --檔案名稱：br_gen.vhd
 --功    能：鮑率產生器
+--說    明：輸入 1.8432MHz，先除 divisor(3) 得 614.4kHz，
+--          再以 8 位元計數器產生 8 種鮑率的 8 倍頻 bclkx8，
+--          最後除 8 得到實際鮑率 bclk (38400 ~ 300 bps)。
 --日    期：2003.8.8
 -------------------------------------------------------------------
 library ieee;
@@ -22,7 +25,7 @@ architecture arch of br_gen is
   signal ctr1: std_logic_vector (7 downto 0):= "00000000";
   signal ctr2: std_logic_vector (2 downto 0):= "000";
 begin
-  ----- clk divider -----
+  ----- clk divider (除 divisor 倍) -----
   process (sysclk)
     variable cnt1     : integer range 0 to divisor;
     variable divisor2 : integer range 0 to divisor;
@@ -42,16 +45,17 @@ begin
     end if;
   end process;
   clkdiv<=  cnt2 ;
-  ----- 8 bits counter -----
+  ----- 8 bits counter (各位元為 clkdiv 的 2^(k+1) 除頻) -----
   process (clkdiv)	
   begin
     if(rising_edge(clkdiv)) then
       ctr1 <= ctr1+1;
     end if;
   end process;
-  ----- MUX -----
+  ----- MUX：依 sel 選擇計數器位元作為 8 倍鮑率時脈 -----
+  -- sel=000 → ctr1(0) = 1.8432M/3/2 = 307.2kHz = 38400 x 8
   bclkx8<=ctr1(CONV_INTEGER(sel));
-  ----- clkdiv8 -----
+  ----- clkdiv8：再除 8 得到鮑率時脈 bclk -----
   process (bclkx8)
   begin
     if(rising_edge(bclkx8)) then

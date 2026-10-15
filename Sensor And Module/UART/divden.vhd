@@ -1,3 +1,11 @@
+-------------------------------------------------------------------
+-- 檔案名稱：divden.vhd
+-- 功    能：任意偶數除頻器 (50% 工作週期)
+-- 說    明：
+--   每計數 N/2 個輸入時脈就反相一次輸出，因此 clkout = Pinclk / N。
+--   UART 中以 N=6 將 11.059MHz 除為 1.8432MHz，供鮑率產生器使用。
+--   rst='0' 時非同步重置。
+-------------------------------------------------------------------
 --任意除頻器
 --假設輸入11.059MHz頻率,可任意除N倍頻率 N=6頻率=1.8432MHz  
 library ieee;
@@ -7,8 +15,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity divden is 
 generic(N:integer :=6);--除N=6倍頻率 
 port (
-       Pinclk,rst:in  std_logic;
-       clkout    :out  std_logic
+       Pinclk,rst:in  std_logic;	-- 輸入時脈、低態重置
+       clkout    :out  std_logic	-- 除頻輸出
       );
 end divden;
 architecture a of divden is

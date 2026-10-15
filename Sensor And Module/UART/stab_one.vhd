@@ -1,3 +1,14 @@
+-------------------------------------------------------------------
+-- 檔案名稱：stab_one.vhd
+-- 功    能：單擊脈波產生器 (One-shot)，將按住的按鍵轉為固定寬度的單一脈波
+-- 說    明：
+--   Plus_in 為 '1' 期間，tem 在 CLKin 負緣計數 1 → 9，
+--   到達 num_tem ("1001") 後跳到 "1110" 並停住，直到 Plus_in 回到 '0' 才清除。
+--   ftem 為 tem 的 one-hot 解碼，Plus_out 為 ftem 各位元 OR，
+--   因此每按一次只輸出寬度約 9 個 CLKin 週期的高態脈波，
+--   UART 中用來把 txd_start_H 轉為只觸發一次傳送的啟動脈波。
+--   (P8-18 ex：教材範例編號)
+-------------------------------------------------------------------
 --P8-18 ex
 library ieee;
 use ieee.std_logic_1164.all;
@@ -6,16 +17,16 @@ use ieee.std_logic_arith.all;
 --******************************
 entity stab_one is
 	port(
-		 CLKin,rest,Plus_in:in  std_logic;
-		 Plus_out:out  std_logic
+		 CLKin,rest,Plus_in:in  std_logic;	-- 時脈、低態重置、觸發輸入
+		 Plus_out:out  std_logic			-- 單擊脈波輸出
 		
            );
 end stab_one;
 --*******************************
 architecture A1 of stab_one is
-signal tem:std_logic_vector(3 downto 0);
-signal num_tem:std_logic_vector(3 downto 0):="1001";
-signal ftem:std_logic_vector(12 downto 0);
+signal tem:std_logic_vector(3 downto 0);					-- 脈波寬度計數器
+signal num_tem:std_logic_vector(3 downto 0):="1001";		-- 脈波寬度上限 (9)
+signal ftem:std_logic_vector(12 downto 0);				-- tem 的 one-hot 解碼
 begin 
 process(CLKin,rest,Plus_in)
 begin
@@ -35,6 +46,7 @@ begin
          tem<="0000"; 
      end if;  
   end if;
+-- tem 解碼：1~13 對應 one-hot 位元，0 與 14、15 輸出全 0
 case tem is
   when "0000"=>
          ftem<="0000000000000";--0
@@ -70,6 +82,7 @@ case tem is
   --f<=ftem;
   
 end process ;
+-- 任一位元為 1 即輸出高態
 Plus_out<=ftem(0)or ftem(1) or ftem(2)or ftem(3) or ftem(4)or 
           ftem(5) or ftem(6)or ftem(7) or ftem(8)or ftem(9)or
           ftem(10)or ftem(11) or ftem(12);

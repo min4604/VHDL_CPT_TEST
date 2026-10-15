@@ -1,5 +1,17 @@
 --V13_I2C_driver2:eeprom I2C全功能版
 --Creator by YHGL
+--
+--功    能：通用 I2C 主控端 (Master) 驅動，支援 EEPROM 與一般 I2C 感測器
+--說    明：
+--  裝置位址 = ID(4 bit) & A2A1A0(3 bit)，例 TSL2561：0111 & 001 = 0x39
+--  Wdata：S + 位址 + W + ACK + ADDR(暫存器/命令) + ACK + DATAin + ACK + P
+--  Rdata：S + 位址 + W + ACK + ADDR + ACK + Sr + 位址 + R + ACK + 讀出資料 + NACK/ACK + P
+--  每個位元分 3 個相位 (I=0:設定 SDA, I=1:SCL 拉高並讀 ACK/資料, I=2:SCL 拉低)。
+--  CurrentADDR='0'：目前位址讀取 (從 Rdata 第 20 位開始，省略寫入位址)
+--  CurrentADDR='1'：指定位址讀取 (從 Rdata 第 40 位開始)
+--  寫入 EEPROM 後會以 ACK polling 確認寫入完成。
+--  D_W_R_N>1 時為連續讀寫，每完成 1 byte 送出 D_W_R_Nok，上層回 reWR 後繼續。
+--  無 ACK 時暫停 PN 個時脈重試，最多 RWN 次；完成時 I2Cok='1'，I2CS='1' 表示失敗。
 
 library ieee;
 	use ieee.std_logic_1164.all;

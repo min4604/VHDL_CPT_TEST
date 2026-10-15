@@ -1,6 +1,18 @@
 --sd178BMI2C2wdriver
 --此driver只適用於SD178BMI2C模組
 --Creator by YHGL 107.07.xx
+--
+--功    能：SD178BM 語音模組專用 I2C 主控端 (Master) 驅動
+--說    明：
+--  Wdata / Rdata 為事先排好的「位元命令表」(S、裝置碼、R/W、ACK、資料、P)，
+--  WN / RN 由高位往低位逐位元送出；每個位元分 3 個相位 (I=0,1,2)：
+--    I=0 : 將 SDA 設為目前位元
+--    I=1 : SCL 拉高，並在 ACK 位置讀回 SDA (高態=無 ACK → 錯誤重試)
+--    I=2 : SCL 拉低，進入下一位元
+--  RW='0' 寫入 / RW='1' 讀取；D_W_R_N>1 時為連續 (page) 讀寫，
+--  每完成 1 byte 送出 D_W_R_Nok，上層回 reWR 後再繼續下一筆。
+--  當 D_W_R_N=1 且 DATAin=0 時，送出喚醒 SD178BM (由睡眠省電模式) 的特殊序列。
+--  失敗時暫停 PN 個時脈後重試，最多 RWN 次；完成時 I2Cok='1'，I2CS='1' 表示失敗。
 
 library ieee;
 	use ieee.std_logic_1164.all;

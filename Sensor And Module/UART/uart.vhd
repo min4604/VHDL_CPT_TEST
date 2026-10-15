@@ -1,6 +1,8 @@
 -------------------------------------------------------
---龅率選擇腳
---	(Sel[2..0])		龅率(bclk)
+--檔案名稱：uart.vhd
+--功    能：UART 收發器頂層 (8N1)
+--鮑率選擇腳
+--	(Sel[2..0])		鮑率(bclk)
 --		000			  38400
 --		001			  19200
 --		010			  9600
@@ -15,6 +17,11 @@
 --	txd_start_H		一脈波(負緣觸發)傳送一筆資料
 --	txd_down_H		資料傳送完成產生一脈波
 --	rxd_ready_H		接收資料產生一脈波
+--
+--	架構：divden(÷6) → br_gen(鮑率產生) → uart_transmitter / uart_receiver
+--	      txd_start_H 先經 stab_one 轉成單擊脈波再觸發傳送
+--	資料格式：1 start bit, 8 data bits (LSB first), 1 stop bit, 無同位元
+--	鮑率由內部 signal sel 設定 (預設 "010" = 9600)
 
 -------------------------------------------------------
 
@@ -27,15 +34,15 @@ use ieee.std_logic_unsigned.all;
 
 
 entity uart is
-port(	sysclk_11_059M	: in	std_logic;
-		rst_L			: in	std_logic;
-		txd_start_H		: in	std_logic;
-		txd_data_BUS	: in	std_logic_vector(7 downto 0);
-		rxd				: in 	std_logic;
-		rxd_ready_H		: out	std_logic;
-		rxd_data_BUS	: out	std_logic_vector(7 downto 0);
-		txd_down_H		: out	std_logic;
-		txd 			: out	std_logic
+port(	sysclk_11_059M	: in	std_logic;						-- 11.059MHz 系統時脈
+		rst_L			: in	std_logic;						-- 低態重置
+		txd_start_H		: in	std_logic;						-- 開始傳送
+		txd_data_BUS	: in	std_logic_vector(7 downto 0);	-- 待傳送資料
+		rxd				: in 	std_logic;						-- 串列接收腳
+		rxd_ready_H		: out	std_logic;						-- 接收完成脈波
+		rxd_data_BUS	: out	std_logic_vector(7 downto 0);	-- 接收到的資料
+		txd_down_H		: out	std_logic;						-- 傳送完成脈波
+		txd 			: out	std_logic						-- 串列傳送腳
 
 	);
 end uart;
@@ -99,29 +106,34 @@ port(
 end component;
 
 
-signal clk_1_8432M 		:std_logic;
-signal bclk				:std_logic;
-signal bclkx8			:std_logic;
-signal txd_start_plus 	:std_logic;
+signal clk_1_8432M 		:std_logic;		-- 11.059MHz/6 = 1.8432MHz
+signal bclk				:std_logic;		-- 鮑率時脈
+signal bclkx8			:std_logic;		-- 8 倍鮑率時脈 (接收取樣用)
+signal txd_start_plus 	:std_logic;		-- 單擊化後的傳送啟動脈波
 begin
 	
+	-- 11.059MHz ÷ 6 = 1.8432MHz
 	divden_6 	: divden
 	generic	map(n=>6) --除6倍頻率
 	port	map(sysclk_11_059M,rst_L,clk_1_8432M);
 	
 	
+	-- 產生鮑率時脈 bclk 與 8 倍鮑率 bclkx8
 	br_gen_3 	: br_gen
 	generic	map(divisor=>3)
 	port	map(clk_1_8432M,sel,bclkx8,bclk);
 	
+	-- 傳送啟動信號轉為單擊脈波，避免按住時重複傳送
 	txd_en_stab	: stab_one
 	port	map(bclk,rst_L,txd_start_H,txd_start_plus);
 	
 	
+	-- 接收器
 	rxd_A		: uart_receiver
 	port	map(clk_1_8432M,rst_L,bclkx8,rxd,rxd_ready_H,rxd_data_BUS);
 	
 	
+	-- 傳送器
 	txd_A		: uart_transmitter
 	port	map(clk_1_8432M,rst_L,bclk,txd_start_plus,txd_data_BUS,txd_down_H,txd);
 

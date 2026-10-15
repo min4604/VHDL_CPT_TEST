@@ -1,3 +1,13 @@
+-------------------------------------------------------------------
+-- 檔案名稱：divider_n.vhd
+-- 功    能：通用除 N 除頻器 (輸出約 50% 工作週期)
+-- 說    明：
+--   cnt1 在 1 ~ N 之間循環計數，當計數到 N/2 與 N 時各反相一次 cnt2，
+--   因此每 N 個輸入時脈產生 1 個完整輸出週期：Clk_out = Clk_in / N。
+--   例：Clk_in = 50MHz、N = 10,000,000 → Clk_out = 5Hz
+--       Clk_in = 50MHz、N = 200,000    → Clk_out = 250Hz
+--   使用時以 generic map(N=>...) 指定除頻倍數。
+-------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -9,18 +19,19 @@ entity divider_n is
 --Clk_out=250HZ
 generic(N:integer:=10000000);--Clk_in/Clk_out=N
 port
-(Clk_50M       :in std_logic;
- Clk_out       :out std_logic);
+(Clk_50M       :in std_logic;		-- 輸入時脈
+ Clk_out       :out std_logic);		-- 除頻後輸出時脈
 end divider_n;
 
 architecture ARCH of divider_n is
-signal cnt2:std_logic;
+signal cnt2:std_logic;					-- 輸出時脈暫存
 begin
 	process(Clk_50M)
-		variable cnt1:integer range 0 to N:=1;
-		variable N2:integer range 0 to N; 
+		variable cnt1:integer range 0 to N:=1;	-- 計數器 1~N
+		variable N2:integer range 0 to N; 		-- 半週期計數點
 	begin
 		N2:=N/2;
+		-- 計數 1 ~ N 循環
 		if rising_edge(Clk_50M) then
 			if cnt1=N then
 				cnt1:=1;
@@ -28,6 +39,7 @@ begin
 				cnt1:=cnt1+1;
 			end if;
 		end if;
+		-- 計數到半週期或整週期時反相輸出
 		if rising_edge(Clk_50M)then
 			if cnt1=N2 or cnt1=N then
 				cnt2<=not cnt2;
